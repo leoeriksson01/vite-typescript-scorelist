@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react'
+import React, { ReactNode, useState, useEffect } from 'react'
 import { Link } from '@chakra-ui/react'
 import {
   Container,
@@ -11,30 +11,55 @@ import {
 } from '@northlight/ui'
 import { palette } from '@northlight/tokens'
 import { ExcelDropzone, ExcelRow } from './excel-dropzone.jsx'
+import {ScoreList} from './components/ScoreList.jsx'
+import defaultUsers from "./users"
+import defaultScores from "./scores"
 
 interface ExternalLinkProps {
   href: string,
   children: ReactNode,
 }
 
-const ExternalLink = ({ href, children }: ExternalLinkProps) => <Link href={href} isExternal sx={ {color: palette.blue['500'], textDecoration: 'underline'} }>{ children }</Link>
-
 export default function App () {
+
+  const getDefaultScores = (): { name: string; score: number }[] => {
+  type User = { _id: number; name: string };
+  type Score = { userId: number; score: number };
+
+  const nameLookup: { [key: number]: string } = {};
+
+  defaultUsers.forEach((user: User) => {
+    nameLookup[user._id] = user.name;
+  });
+
+  const scoresWithUserNames: { name: string; score: number }[] = defaultScores.map((score: Score) => ({
+    name: nameLookup[score.userId],
+    score: score.score
+  }));
+
+  return scoresWithUserNames;
+};
+  
+
+  const [currentScoreList, setCurrentScoreList] = useState<Array<ExcelRow>>(getDefaultScores())
   function handleSheetData (data: ExcelRow[]) {
-    // replace this log with actual handling of the data
-    console.log(data)
+    setCurrentScoreList(data)
   }
+
+  useEffect(() => {
+  // console.log("currentScoreList is: ", currentScoreList)
+  },[currentScoreList])
 
   return (
     <Container maxW="6xl" padding="4">
       <H1 marginBottom="4" >Mediatool exercise</H1>
       <HStack spacing={10} align="flex-start">
-        <ExcelDropzone
+         <ExcelDropzone
           onSheetDrop={ handleSheetData }
           label="Import excel file here"
-        />
+        /> 
         <VStack align="left">
-          <Box>
+        {/*   <Box>
             <H2>Initial site</H2>
             <P>
               Drop the excel file scores.xlsx that you will find
@@ -61,7 +86,9 @@ export default function App () {
               Checkout <ExternalLink href="https://northlight.dev/">Northlight</ExternalLink> for
               some of our components.
             </P>
-          </Box>
+          </Box> */}
+          <ScoreList data={currentScoreList}/>
+
         </VStack>
       </HStack>
     </Container>
